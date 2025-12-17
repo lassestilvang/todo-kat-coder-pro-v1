@@ -72,8 +72,7 @@ interface UIState {
 }
 
 export const useUIStore = create<UIState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       theme: "system",
       isDarkMode: false,
 
@@ -181,13 +180,5 @@ export const useUIStore = create<UIState>()(
         set({ sidebarCollapsed: collapsed });
       },
     }),
-    {
-      name: "ui-store",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        theme: state.theme,
-        sidebarCollapsed: state.sidebarCollapsed,
-      }),
-    }
   )
 );

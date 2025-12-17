@@ -24,8 +24,8 @@ export function Dashboard() {
   // Store hooks
   const tasks = useTaskStore((state: any) => state.byId);
   const loading = useTaskStore((state: any) => state.loading);
-  const lists = useListStore((state: any) => state.lists);
-  const labels = useLabelStore((state: any) => state.labels);
+  const lists = useListStore((state) => state.allIds.map(id => state.byId[id]));
+  const labels = useLabelStore((state) => state.allIds.map(id => state.byId[id]));
   const currentView = useViewStore((state: any) => state.currentView);
   const searchQuery = useSearchStore((state: any) => state.query);
 

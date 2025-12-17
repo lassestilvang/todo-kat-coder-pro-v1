@@ -20,13 +20,13 @@ export function TodayView() {
 
   // Store hooks
   const tasks = useAllTasks();
-  const loading = useTaskStore((state) => state.loading);
-  const error = useTaskStore((state) => state.error);
-  const lists = useListStore((state) => state.lists);
-  const labels = useLabelStore((state) => state.labels);
-  const searchQuery = useSearchStore((state) => state.query);
-  const searchResults = useSearchStore((state) => state.results);
-  const isSearching = useSearchStore((state) => state.isSearching);
+  const loading = useTaskStore.getState().loading;
+  const error = useTaskStore.getState().error;
+  const lists = useListStore.getState().allIds.map((id) => useListStore.getState().byId[id]);
+  const labels = useLabelStore.getState().allIds.map((id) => useLabelStore.getState().byId[id]);
+  const searchQuery = useSearchStore.getState().query;
+  const searchResults = useSearchStore.getState().results;
+  const isSearching = useSearchStore.getState().isSearching;
 
   // Get today's date
   const today = new Date().toISOString().split("T")[0];

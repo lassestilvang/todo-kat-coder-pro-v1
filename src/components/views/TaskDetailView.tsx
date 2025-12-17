@@ -26,8 +26,12 @@ export function TaskDetailView({
   onDuplicate,
 }: TaskDetailViewProps) {
   const [isEditing, setIsEditing] = React.useState(false);
-  const lists = useListStore((state: any) => state.lists);
-  const labels = useLabelStore((state: any) => state.labels);
+  const lists = useListStore((state) =>
+    state.allIds.map((id) => state.byId[id])
+  );
+  const labels = useLabelStore((state) =>
+    state.allIds.map((id) => state.byId[id])
+  );
 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return "";

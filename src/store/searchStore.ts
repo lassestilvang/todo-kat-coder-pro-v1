@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { TaskWithRelations } from "@/types/task";
-import { TaskService } from "@/services/task-service";
 
 interface SearchState {
   // Search state
@@ -36,11 +35,11 @@ interface SearchState {
   setFilters: (filters: Partial<SearchState["filters"]>) => void;
   clearFilters: () => void;
   setSearchError: (error: string | null) => void;
+  setSearchTerm: (query: string) => void;
 }
 
 export const useSearchStore = create<SearchState>()(
-  persist(
-    immer((set, get) => ({
+  immer((set, get) => ({
       query: "",
       results: [],
       searchHistory: [],
@@ -66,8 +65,44 @@ export const useSearchStore = create<SearchState>()(
         });
 
         try {
-          const searchFilters = filters || get().filters;
-          const results = await TaskService.searchTasks(query, searchFilters);
+          const currentFilters = get().filters;
+          const searchFilters = filters || currentFilters;
+          
+          // Build query parameters
+          const params = new URLSearchParams({
+            q: query,
+            type: "tasks",
+            limit: "50",
+            offset: "0",
+          });
+
+          // Add filter parameters
+          if (searchFilters.lists && searchFilters.lists.length > 0) {
+            params.append("lists", searchFilters.lists.join(","));
+          }
+          if (searchFilters.labels && searchFilters.labels.length > 0) {
+            params.append("labels", searchFilters.labels.join(","));
+          }
+          if (searchFilters.priorities && searchFilters.priorities.length > 0) {
+            params.append("priorities", searchFilters.priorities.join(","));
+          }
+          if (searchFilters.dateRange && searchFilters.dateRange.start) {
+            params.append("startDate", searchFilters.dateRange.start);
+          }
+          if (searchFilters.dateRange && searchFilters.dateRange.end) {
+            params.append("endDate", searchFilters.dateRange.end);
+          }
+          if (searchFilters.completed !== null && searchFilters.completed !== undefined) {
+            params.append("completed", searchFilters.completed.toString());
+          }
+
+          const response = await fetch(`/api/search?${params.toString()}`);
+          
+          if (!response.ok) {
+            throw new Error("Search failed");
+          }
+
+          const results = await response.json();
 
           set((state) => {
             state.results = results;
@@ -146,14 +181,12 @@ export const useSearchStore = create<SearchState>()(
           state.searchError = error;
         });
       },
-    })),
-    {
-      name: "search-store",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        searchHistory: state.searchHistory,
-        filters: state.filters,
-      }),
-    }
+
+      setSearchTerm: (query) => {
+        set((state) => {
+          state.query = query;
+        });
+      },
+    }),
   )
 );

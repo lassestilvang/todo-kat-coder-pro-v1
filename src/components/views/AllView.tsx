@@ -22,8 +22,10 @@ export function AllView() {
   const tasks = useTaskStore((state: any) => state.byId);
   const loading = useTaskStore((state: any) => state.loading);
   const error = useTaskStore((state: any) => state.error);
-  const lists = useListStore((state: any) => state.lists);
-  const labels = useLabelStore((state: any) => state.labels);
+  const lists = useListStore((state) =>
+    state.allIds.map((id) => state.byId[id])
+  );
+  const labels = useLabelStore((state) => state.allIds.map(id => state.byId[id]));
   const searchQuery = useSearchStore((state: any) => state.query);
   const searchResults = useSearchStore((state: any) => state.results);
   const isSearching = useSearchStore((state: any) => state.isSearching);

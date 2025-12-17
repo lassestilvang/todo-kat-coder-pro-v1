@@ -22,8 +22,8 @@ export function InboxView() {
   const tasks = useAllTasks();
   const loading = useTaskStore((state) => state.loading);
   const error = useTaskStore((state) => state.error);
-  const lists = useListStore((state) => state.lists);
-  const labels = useLabelStore((state) => state.labels);
+  const lists = useListStore((state) => state.allIds.map(id => state.byId[id]));
+  const labels = useLabelStore((state) => state.allIds.map(id => state.byId[id]));
   const searchQuery = useSearchStore((state) => state.query);
   const searchResults = useSearchStore((state) => state.results);
   const isSearching = useSearchStore((state) => state.isSearching);

@@ -2,7 +2,6 @@ import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
-  json,
   sqliteTable,
   text,
   uniqueIndex,
@@ -90,7 +89,7 @@ export const tasks = sqliteTable(
     recurrenceEndDate: text("recurrence_end_date"), // ISO date when recurrence ends
 
     // Reminders configuration (stored as JSON array of reminder objects)
-    reminders: json("reminders"), // Array of { time: string, unit: 'minutes'|'hours'|'days' }
+    reminders: text("reminders"), // JSON string of array of { time: string, unit: 'minutes'|'hours'|'days' }
 
     // Metadata
     createdAt: text("created_at")
@@ -196,9 +195,9 @@ export const taskChanges = sqliteTable(
     changeType: text("change_type", {
       enum: ["create", "update", "delete", "complete", "uncomplete"],
     }).notNull(),
-    changedFields: json("changed_fields"), // JSON object with field changes
-    oldValue: json("old_value"), // Previous state of the task
-    newValue: json("new_value"), // New state of the task
+    changedFields: text("changed_fields"), // JSON string of field changes
+    oldValue: text("old_value"), // JSON string of previous state
+    newValue: text("new_value"), // JSON string of new state
     changedBy: text("changed_by"), // User who made the change (if applicable)
     createdAt: text("created_at")
       .notNull()

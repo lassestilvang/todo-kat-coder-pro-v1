@@ -12,6 +12,7 @@ import {
   Save,
   Folder,
   Star,
+  Search,
 } from "lucide-react";
 import { Button } from "./button";
 import { Input } from "./input";
@@ -59,8 +60,12 @@ export function AdvancedFilterBar({
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [saveFilterName, setSaveFilterName] = useState("");
 
-  const lists = useListStore((state) => state.lists);
-  const labels = useLabelStore((state) => state.labels);
+  const lists = useListStore((state) =>
+    state.allIds.map((id) => state.byId[id])
+  );
+  const labels = useLabelStore((state) =>
+    state.allIds.map((id) => state.byId[id])
+  );
 
   const priorityOptions: Priority[] = ["low", "medium", "high", "urgent"];
   const statusOptions = [

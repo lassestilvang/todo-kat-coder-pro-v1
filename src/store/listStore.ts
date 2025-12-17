@@ -3,7 +3,6 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { List } from "@/types/task";
 import { validateList, validateListField } from "@/lib/validation";
-import { ListService } from "@/services/list-service";
 
 interface EntityState<T> {
   byId: Record<number, T>;
@@ -47,8 +46,7 @@ interface ListState extends EntityState<List> {
 }
 
 export const useListStore = create<ListState>()(
-  persist(
-    immer((set) => ({
+  immer((set) => ({
       // Initial state
       byId: {},
       allIds: [],
@@ -74,7 +72,12 @@ export const useListStore = create<ListState>()(
         });
 
         try {
-          const lists = await ListService.getAll();
+          const response = await fetch("/api/lists");
+          if (!response.ok) {
+            throw new Error("Failed to fetch lists");
+          }
+          const lists = await response.json();
+
           set((state) => {
             state.loading = "success";
             state.error = null;
@@ -85,7 +88,7 @@ export const useListStore = create<ListState>()(
             state.allIds = [];
 
             // Add new lists
-            lists.forEach((list) => {
+            lists.forEach((list: List) => {
               state.byId[list.id] = list;
               state.allIds.push(list.id);
             });
@@ -107,7 +110,19 @@ export const useListStore = create<ListState>()(
 
         try {
           const validatedList = validateList(listData);
-          const newList = await ListService.create(validatedList);
+          const response = await fetch("/api/lists", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(validatedList),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to create list");
+          }
+
+          const newList = await response.json();
 
           set((state) => {
             state.byId[newList.id] = newList;
@@ -137,7 +152,19 @@ export const useListStore = create<ListState>()(
 
         try {
           const validatedUpdates = validateListPartial(updates);
-          const updatedList = await ListService.update(id, validatedUpdates);
+          const response = await fetch(`/api/lists/${id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(validatedUpdates),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to update list");
+          }
+
+          const updatedList = await response.json();
 
           set((state) => {
             state.byId[id] = { ...currentList, ...updatedList };
@@ -162,22 +189,26 @@ export const useListStore = create<ListState>()(
         });
 
         try {
-          const success = await ListService.delete(id);
+          const response = await fetch(`/api/lists/${id}`, {
+            method: "DELETE",
+          });
 
-          if (success) {
-            set((state) => {
-              delete state.byId[id];
-              state.allIds = state.allIds.filter((listId) => listId !== id);
-              state.loading = "success";
-              state.error = null;
-
-              if (state.selectedListId === id) {
-                state.selectedListId = null;
-              }
-            });
-          } else {
+          if (!response.ok) {
             throw new Error("Failed to delete list");
           }
+
+          set((state) => {
+            delete state.byId[id];
+            state.allIds = state.allIds.filter(
+              (listId: number) => listId !== id
+            );
+            state.loading = "success";
+            state.error = null;
+
+            if (state.selectedListId === id) {
+              state.selectedListId = null;
+            }
+          });
         } catch (error) {
           set((state) => {
             state.loading = "error";
@@ -235,18 +266,35 @@ export const useListStore = create<ListState>()(
           state.error = null;
         });
       },
-    })),
-    {
-      name: "list-store",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        byId: state.byId,
-        allIds: state.allIds,
-        lastUpdated: state.lastUpdated,
-      }),
-    }
+    }),
   )
 );
 
 // Helper function to get store state (for use in actions)
 const get = () => useListStore.getState();
+
+// Helper function for partial validation
+function validateListPartial(updates: Partial<List>): Partial<List> {
+  const errors: Record<string, string> = {};
+
+  if (updates.name !== undefined) {
+    const error = validateListField("name", updates.name);
+    if (error) errors.name = error;
+  }
+
+  if (updates.color !== undefined) {
+    const error = validateListField("color", updates.color);
+    if (error) errors.color = error;
+  }
+
+  if (updates.emoji !== undefined) {
+    const error = validateListField("emoji", updates.emoji);
+    if (error) errors.emoji = error;
+  }
+
+  if (Object.keys(errors).length > 0) {
+    throw new Error(Object.values(errors).join(", "));
+  }
+
+  return updates;
+}

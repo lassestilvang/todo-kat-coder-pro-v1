@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { TaskWithRelations } from "@/types/task";
-import { TaskService } from "@/services/task-service";
 
 type ViewType = "today" | "next7days" | "upcoming" | "all" | "inbox";
 
@@ -45,8 +44,7 @@ interface ViewState {
 }
 
 export const useViewStore = create<ViewState>()(
-  persist(
-    (set, get) => ({
+  (set, get) => ({
       currentView: "today",
       tasks: [],
       loading: false,
@@ -66,23 +64,14 @@ export const useViewStore = create<ViewState>()(
         try {
           let tasks: TaskWithRelations[] = [];
 
-          switch (view) {
-            case "today":
-              tasks = await TaskService.getTodayTasks();
-              break;
-            case "next7days":
-              tasks = await TaskService.getUpcomingTasks(7);
-              break;
-            case "upcoming":
-              tasks = await TaskService.getUpcomingTasks(30);
-              break;
-            case "all":
-              tasks = await TaskService.getAllTasks();
-              break;
-            case "inbox":
-              tasks = await TaskService.getInboxTasks();
-              break;
+          // Fetch tasks from API based on view
+          const response = await fetch(`/api/views/${view}`);
+
+          if (!response.ok) {
+            throw new Error("Failed to load view");
           }
+
+          tasks = await response.json();
 
           set((state) => ({
             tasks,
@@ -112,11 +101,15 @@ export const useViewStore = create<ViewState>()(
 
         try {
           const [today, next7days, upcoming, all, inbox] = await Promise.all([
-            TaskService.getTodayTasks(),
-            TaskService.getUpcomingTasks(7),
-            TaskService.getUpcomingTasks(30),
-            TaskService.getAllTasks(),
-            TaskService.getInboxTasks(),
+            fetch("/api/views/today").then((res) => (res.ok ? res.json() : [])),
+            fetch("/api/views/next-7-days").then((res) =>
+              res.ok ? res.json() : []
+            ),
+            fetch("/api/views/upcoming").then((res) =>
+              res.ok ? res.json() : []
+            ),
+            fetch("/api/views/all").then((res) => (res.ok ? res.json() : [])),
+            fetch("/api/views/inbox").then((res) => (res.ok ? res.json() : [])),
           ]);
 
           set((state) => ({
@@ -144,12 +137,5 @@ export const useViewStore = create<ViewState>()(
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
     }),
-    {
-      name: "view-store",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        currentView: state.currentView,
-      }),
-    }
   )
 );
