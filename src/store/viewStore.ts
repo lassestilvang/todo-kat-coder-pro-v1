@@ -45,7 +45,7 @@ interface ViewState {
 
 export const useViewStore = create<ViewState>()(
   (set, get) => ({
-      currentView: "today",
+    currentView: "today",
       tasks: [],
       loading: false,
       error: null,
@@ -136,6 +136,5 @@ export const useViewStore = create<ViewState>()(
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
-    }),
-  )
+  })
 );

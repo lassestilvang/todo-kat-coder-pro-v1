@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TaskCard } from "./TaskCard";
+import { TaskCard } from "../TaskCard";
 import { TaskWithRelations } from "@/types/task";
 
 interface AnimatedTaskCardProps {
@@ -72,12 +72,9 @@ export function AnimatedTaskCard({
     >
       <TaskCard
         task={task}
-        onToggle={onToggle}
+        onToggle={() => task.id && onToggle(task.id)}
         onEdit={onEdit}
-        onDelete={onDelete}
-        className={`group hover:shadow-lg transition-all duration-300 ${
-          task.isCompleted ? "opacity-75" : ""
-        }`}
+        onDelete={() => task.id && onDelete(task.id)}
       />
     </motion.div>
   );
@@ -323,7 +320,7 @@ export function LoadingSkeleton({
       transition: {
         duration: 0.5,
         repeat: Infinity,
-        repeatType: "reverse",
+        repeatType: "reverse" as const,
       },
     },
   };

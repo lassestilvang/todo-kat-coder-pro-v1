@@ -47,7 +47,8 @@ export const taskSchema = z.object({
 
 export type Task = z.infer<typeof taskSchema>;
 
-export type TaskWithRelations = Task & {
+export type TaskWithRelations = Omit<Task, "reminders"> & {
+  reminders?: Reminder[];
   list?: List;
   labels?: Label[];
   subTasks?: SubTask[];
@@ -64,6 +65,7 @@ export type TaskFormData = Omit<
   | "listId"
   | "reminders"
 > & {
+  title: string; // Title is required
   reminders?: Reminder[];
   labels?: number[]; // Array of label IDs
   subTasks?: Omit<SubTask, "id" | "taskId" | "createdAt" | "updatedAt">[];
@@ -115,9 +117,9 @@ export type TaskChange = {
   id: number;
   taskId: number;
   changeType: "create" | "update" | "delete" | "complete" | "uncomplete";
-  changedFields: Record<string, { old: unknown; new: unknown }>;
-  oldValue: unknown;
-  newValue: unknown;
+  changedFields: string | null;
+  oldValue: string | null;
+  newValue: string | null;
   changedBy: string | null;
   createdAt: string;
 };

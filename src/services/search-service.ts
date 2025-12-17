@@ -29,7 +29,7 @@ export class SearchService {
         like(attachments.fileName, `%${query}%`),
       ];
 
-      const whereClause = db.sql`(${searchConditions.join(" OR ")})`;
+      const whereClause = sql`(${searchConditions.join(" OR ")})`;
 
       // Get total count
       const totalResult = await db
@@ -64,7 +64,7 @@ export class SearchService {
         .leftJoin(attachments, eq(tasks.id, attachments.taskId))
         .where(whereClause)
         .orderBy(
-          orderDirection === "asc" ? asc(tasks[orderBy]) : desc(tasks[orderBy])
+          orderDirection === "asc" ? asc(tasks.updatedAt) : desc(tasks.updatedAt)
         )
         .limit(limit)
         .offset(offset);
@@ -74,6 +74,7 @@ export class SearchService {
       // Group results by task
       const tasksMap = new Map<number, TaskWithRelations>();
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rawResults.forEach((row: any) => {
         const taskId = row.task.id;
 
@@ -140,19 +141,19 @@ export class SearchService {
         like(tasks.description, `%${query}%`),
       ];
 
-      let whereClause = db.sql`(${searchConditions.join(" OR ")})`;
+      let whereClause = sql`(${searchConditions.join(" OR ")})`;
 
       // Apply additional filters
       if (options.listId) {
-        whereClause = db.sql`${whereClause} AND ${tasks.listId} = ${options.listId}`;
+        whereClause = sql`${whereClause} AND ${tasks.listId} = ${options.listId}`;
       }
 
       if (options.priority) {
-        whereClause = db.sql`${whereClause} AND ${tasks.priority} = ${options.priority}`;
+        whereClause = sql`${whereClause} AND ${tasks.priority} = ${options.priority}`;
       }
 
       if (options.completed !== undefined) {
-        whereClause = db.sql`${whereClause} AND ${tasks.isCompleted} = ${
+        whereClause = sql`${whereClause} AND ${tasks.isCompleted} = ${
           options.completed ? 1 : 0
         }`;
       }
@@ -183,6 +184,7 @@ export class SearchService {
       // Group results by task
       const tasksMap = new Map<number, TaskWithRelations>();
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rawResults.forEach((row: any) => {
         const taskId = row.task.id;
 

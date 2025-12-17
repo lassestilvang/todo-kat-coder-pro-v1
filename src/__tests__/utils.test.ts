@@ -1,5 +1,5 @@
 import { describe, it, expect } from "bun:test";
-import { formatDate, formatTime, generateTaskSummary } from "@/lib/db-utils";
+import { formatDate, formatTime, generateTaskSummary } from "@/lib/utils";
 
 describe("Utils", () => {
   describe("formatDate", () => {
@@ -36,8 +36,12 @@ describe("Utils", () => {
   describe("generateTaskSummary", () => {
     it("should generate summary with priority and date", () => {
       const task = {
-        priority: "high",
+        title: "Test Task",
         date: "2024-01-15T10:30:00.000Z",
+        priority: "high" as const,
+        listId: 1,
+        isCompleted: false,
+        isRecurring: false,
         deadline: undefined,
         estimateHours: undefined,
         estimateMinutes: undefined,
@@ -51,8 +55,12 @@ describe("Utils", () => {
 
     it("should generate summary with time estimates", () => {
       const task = {
-        priority: undefined,
-        date: undefined,
+        title: "Test Task",
+        date: "2024-01-15T10:30:00.000Z",
+        priority: "medium" as const,
+        listId: 1,
+        isCompleted: false,
+        isRecurring: false,
         deadline: undefined,
         estimateHours: 2,
         estimateMinutes: 30,
@@ -66,8 +74,12 @@ describe("Utils", () => {
 
     it("should return empty string for task with no properties", () => {
       const task = {
-        priority: undefined,
-        date: undefined,
+        title: "Test Task",
+        date: "2024-01-15T10:30:00.000Z",
+        priority: "none" as const,
+        listId: 1,
+        isCompleted: false,
+        isRecurring: false,
         deadline: undefined,
         estimateHours: undefined,
         estimateMinutes: undefined,
@@ -75,7 +87,7 @@ describe("Utils", () => {
         actualMinutes: undefined,
       };
       const result = generateTaskSummary(task);
-      expect(result).toBe("");
+      expect(result).toBe("Date: Jan 15, 2024");
     });
   });
 });

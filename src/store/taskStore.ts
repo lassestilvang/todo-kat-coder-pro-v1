@@ -20,7 +20,7 @@ export const useAllTasks = () => {
   return useTaskStore.getState().allIds.map(id => useTaskStore.getState().byId[id]).filter(Boolean);
 };
 
-interface TaskState extends EntityState<TaskWithRelations> {
+export interface TaskState extends EntityState<TaskWithRelations> {
   // Filtering and sorting
   filter: TaskFilter;
   sort: TaskSort;

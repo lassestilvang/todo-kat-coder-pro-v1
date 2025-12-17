@@ -7,8 +7,10 @@ describe("Task Schema", () => {
       title: "Test Task",
       description: "Test Description",
       priority: "medium",
-      dueDate: new Date().toISOString(),
+      date: new Date().toISOString().split("T")[0],
+      listId: 1,
       isCompleted: false,
+      isRecurring: false,
     };
 
     const result = taskSchema.safeParse(validTask);
@@ -18,8 +20,10 @@ describe("Task Schema", () => {
   it("should reject a task without a title", () => {
     const invalidTask: Partial<TaskFormData> = {
       priority: "medium",
-      dueDate: new Date().toISOString(),
+      date: new Date().toISOString().split("T")[0],
+      listId: 1,
       isCompleted: false,
+      isRecurring: false,
     };
 
     const result = taskSchema.safeParse(invalidTask);
@@ -27,7 +31,7 @@ describe("Task Schema", () => {
     expect(result.error?.issues).toContainEqual(
       expect.objectContaining({
         path: ["title"],
-        message: "Title is required",
+        message: "Required",
       })
     );
   });
@@ -36,6 +40,9 @@ describe("Task Schema", () => {
     const minimalTask: Partial<TaskFormData> = {
       title: "Minimal Task",
       priority: "low",
+      date: new Date().toISOString().split("T")[0],
+      listId: 1,
+      isRecurring: false,
     };
 
     const result = taskSchema.safeParse(minimalTask);

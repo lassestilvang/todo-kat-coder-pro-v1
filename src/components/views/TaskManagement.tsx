@@ -22,16 +22,16 @@ export function TaskManagement() {
   const [bulkAction, setBulkAction] = React.useState<string>("");
 
   // Store hooks
-  const tasks = useTaskStore((state: any) => state.byId);
-  const loading = useTaskStore((state: any) => state.loading);
-  const error = useTaskStore((state: any) => state.error);
+  const tasks = useTaskStore((state) => state.byId);
+  const loading = useTaskStore((state) => state.loading);
+  const error = useTaskStore((state) => state.error);
   const lists = useListStore((state) =>
     state.allIds.map((id) => state.byId[id])
   );
   const labels = useLabelStore((state) => state.allIds.map(id => state.byId[id]));
-  const searchQuery = useSearchStore((state: any) => state.query);
-  const searchResults = useSearchStore((state: any) => state.results);
-  const isSearching = useSearchStore((state: any) => state.isSearching);
+  const searchQuery = useSearchStore((state) => state.query);
+  const searchResults = useSearchStore((state) => state.results);
+  const isSearching = useSearchStore((state) => state.isSearching);
 
   // Filter state
   const [filters, setFilters] = React.useState({
@@ -93,7 +93,7 @@ export function TaskManagement() {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedTasks(displayTasks.map((task: TaskWithRelations) => task.id));
+      setSelectedTasks(displayTasks.map((task: TaskWithRelations) => task.id).filter((id): id is number => id !== undefined));
     } else {
       setSelectedTasks([]);
     }
@@ -130,10 +130,12 @@ export function TaskManagement() {
 
   // Handle task operations
   const handleTaskToggle = async (task: TaskWithRelations) => {
-    await useTaskStore.getState().toggleTask(task.id);
-    // Update selection if needed
-    if (selectedTasks.includes(task.id)) {
-      setSelectedTasks(selectedTasks.filter((id) => id !== task.id));
+    if (task.id !== undefined) {
+      await useTaskStore.getState().toggleTask(task.id);
+      // Update selection if needed
+      if (selectedTasks.includes(task.id)) {
+        setSelectedTasks(selectedTasks.filter((id) => id !== task.id));
+      }
     }
   };
 
@@ -144,8 +146,10 @@ export function TaskManagement() {
 
   const handleTaskDelete = async (task: TaskWithRelations) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      await useTaskStore.getState().deleteTask(task.id);
-      setSelectedTasks(selectedTasks.filter((id) => id !== task.id));
+      if (task.id !== undefined) {
+        await useTaskStore.getState().deleteTask(task.id);
+        setSelectedTasks(selectedTasks.filter((id) => id !== task.id));
+      }
     }
   };
 
@@ -154,8 +158,8 @@ export function TaskManagement() {
     await useTaskStore.getState().createTask(taskData);
   };
 
-  const handleFormSubmit = async (taskData: any) => {
-    if (selectedTask) {
+  const handleFormSubmit = async (taskData: TaskWithRelations) => {
+    if (selectedTask && selectedTask.id !== undefined) {
       await useTaskStore.getState().updateTask(selectedTask.id, taskData);
     } else {
       await useTaskStore.getState().createTask(taskData);
@@ -179,7 +183,7 @@ export function TaskManagement() {
 
   // Calculate statistics
   const selectedTasksData = displayTasks.filter((task: TaskWithRelations) =>
-    selectedTasks.includes(task.id)
+    task.id !== undefined && selectedTasks.includes(task.id)
   );
   const selectedCompleted = selectedTasksData.filter(
     (t) => t.isCompleted
@@ -304,7 +308,7 @@ export function TaskManagement() {
                 selectedTasks.length === displayTasks.length &&
                 displayTasks.length > 0
               }
-              onCheckedChange={handleSelectAll}
+              onChange={(e) => handleSelectAll(e.target.checked)}
               className="mr-2"
             />
             <span className="text-sm text-gray-600 dark:text-gray-300">

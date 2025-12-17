@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { subTasks } from "@/lib/schema";
 import { eq, sql } from "drizzle-orm";
-import { SubTask } from "@/types/task";
 
 export async function GET(
   request: Request,

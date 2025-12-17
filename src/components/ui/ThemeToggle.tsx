@@ -42,7 +42,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     const themes = ["light", "dark", "system"];
     const currentIndex = themes.indexOf(theme);
     const nextIndex = (currentIndex + 1) % themes.length;
-    setTheme(themes[nextIndex]);
+    setTheme(themes[nextIndex] as "light" | "dark" | "system");
   };
 
   return (

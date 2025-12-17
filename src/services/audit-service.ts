@@ -1,55 +1,55 @@
 import { db } from "@/lib/db";
 import { taskChanges } from "@/lib/schema";
-import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { eq, desc, and, gte, lte, count, sql } from "drizzle-orm";
 import { TaskChange } from "@/types/task";
 
 export class AuditService {
-  async getTaskChanges(
-    taskId: number,
-    options: {
-      limit?: number;
-      offset?: number;
-      startDate?: string;
-      endDate?: string;
-      changeType?: TaskChange["changeType"];
-    } = {}
-  ): Promise<TaskChange[]> {
-    try {
-      const {
-        limit = 100,
-        offset = 0,
-        startDate,
-        endDate,
-        changeType,
-      } = options;
+  // async getTaskChanges(
+  //   taskId: number,
+  //   options: {
+  //     limit?: number;
+  //     offset?: number;
+  //     startDate?: string;
+  //     endDate?: string;
+  //     changeType?: TaskChange["changeType"];
+  //   } = {}
+  // ): Promise<TaskChange[]> {
+  //   try {
+  //     const {
+  //       limit = 100,
+  //       offset = 0,
+  //       startDate,
+  //       endDate,
+  //       changeType,
+  //     } = options;
 
-      let whereClause = eq(taskChanges.taskId, taskId);
+  //     let whereClause = eq(taskChanges.taskId, taskId);
 
-      if (startDate) {
-        whereClause = and(whereClause, gte(taskChanges.createdAt, startDate));
-      }
+  //     if (startDate) {
+  //       whereClause = and(whereClause, gte(taskChanges.createdAt, startDate));
+  //     }
 
-      if (endDate) {
-        whereClause = and(whereClause, lte(taskChanges.createdAt, endDate));
-      }
+  //     if (endDate) {
+  //       whereClause = and(whereClause, lte(taskChanges.createdAt, endDate));
+  //     }
 
-      if (changeType) {
-        whereClause = and(whereClause, eq(taskChanges.changeType, changeType));
-      }
+  //     if (changeType) {
+  //       whereClause = and(whereClause, eq(taskChanges.changeType, changeType));
+  //     }
 
-      return db
-        .select()
-        .from(taskChanges)
-        .where(whereClause)
-        .orderBy(desc(taskChanges.createdAt))
-        .limit(limit)
-        .offset(offset)
-        .all() as TaskChange[];
-    } catch (error) {
-      console.error("Error getting task changes:", error);
-      throw new Error("Failed to get task changes");
-    }
-  }
+  //     return db
+  //       .select()
+  //       .from(taskChanges)
+  //       .where(whereClause)
+  //       .orderBy(desc(taskChanges.createdAt))
+  //       .limit(limit)
+  //       .offset(offset)
+  //       .all() as TaskChange[];
+  //   } catch (error) {
+  //     console.error("Error getting task changes:", error);
+  //     throw new Error("Failed to get task changes");
+  //   }
+  // }
 
   async getAllChanges(
     options: {
@@ -179,7 +179,7 @@ export class AuditService {
         .where(whereClause)
         .groupBy(taskChanges.changeType);
 
-      const changesByType = changesByTypeResult.reduce((acc, item) => {
+      const changesByType = changesByTypeResult.reduce((acc: Record<TaskChange["changeType"], number>, item: { changeType: TaskChange["changeType"]; count: number }) => {
         acc[item.changeType as TaskChange["changeType"]] = Number(item.count);
         return acc;
       }, {} as Record<TaskChange["changeType"], number>);
@@ -195,7 +195,7 @@ export class AuditService {
         .groupBy(sql`DATE(${taskChanges.createdAt})`)
         .orderBy(desc(sql`DATE(${taskChanges.createdAt})`));
 
-      const changesByDay = changesByDayResult.map((item) => ({
+      const changesByDay = changesByDayResult.map((item: { date: string; count: number }) => ({
         date: item.date,
         count: Number(item.count),
       }));
@@ -213,7 +213,7 @@ export class AuditService {
 
   async cleanupOldChanges(maxAgeDays: number = 90): Promise<number> {
     try {
-      const cutoffDate = new Date();
+      const cutoffDate: Date = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - maxAgeDays);
 
       const result = await db
@@ -229,7 +229,7 @@ export class AuditService {
   }
 
   async getTaskHistory(taskId: number): Promise<TaskChange[]> {
-    return this.getTaskChanges(taskId, { limit: 1000 });
+    return this.getAllChanges({ taskId, limit: 1000 });
   }
 
   async getRecentChanges(limit: number = 50): Promise<TaskChange[]> {

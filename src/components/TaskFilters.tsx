@@ -26,11 +26,11 @@ export function TaskFilters({
           onChange={(e) => onFilterChange({ search: e.target.value })}
         />
       </div>
-      <Select
+      <select
         value={filters.priority || "all"}
-        onValueChange={(value) =>
+        onChange={(e) =>
           onFilterChange({
-            priority: value === "all" ? undefined : value,
+            priority: e.target.value === "all" ? undefined : (e.target.value as "none" | "low" | "medium" | "high"),
           })
         }
       >
@@ -39,28 +39,28 @@ export function TaskFilters({
         <option value="medium">Medium</option>
         <option value="high">High</option>
         <option value="urgent">Urgent</option>
-      </Select>
-      <Select
+      </select>
+      <select
         value={filters.status || "all"}
-        onValueChange={(value) =>
-          onFilterChange({ status: value as TaskFilter["status"] })
+        onChange={(e) =>
+          onFilterChange({ status: e.target.value as TaskFilter["status"] })
         }
       >
         <option value="all">All Status</option>
         <option value="pending">Pending</option>
         <option value="completed">Completed</option>
-      </Select>
-      <Select
+      </select>
+      <select
         value={filters.view || "all"}
-        onValueChange={(value) =>
-          onFilterChange({ view: value as TaskFilter["view"] })
+        onChange={(e) =>
+          onFilterChange({ view: e.target.value as TaskFilter["view"] })
         }
       >
         <option value="all">All Tasks</option>
         <option value="today">Today</option>
         <option value="next7days">Next 7 Days</option>
         <option value="upcoming">Upcoming</option>
-      </Select>
+      </select>
       <Button variant="outline" onClick={onClearFilters}>
         Clear Filters
       </Button>

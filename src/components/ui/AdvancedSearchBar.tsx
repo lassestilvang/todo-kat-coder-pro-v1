@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Search, X, Clock, Star, Tag, Filter, Sparkles } from "lucide-react";
 import { Input } from "./input";
 import { Button } from "./button";
 import { Badge } from "./badge";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Command } from "cmdk";
 import { useSearchStore } from "@/store/searchStore";
 import { useTaskStore } from "@/store/taskStore";
 import { useDebounce } from "@/hooks/useDebounce";
-import { cn } from "@/lib/utils";
 
 interface AdvancedSearchBarProps {
   value?: string;
@@ -42,21 +40,13 @@ export function AdvancedSearchBar({
   showSuggestions = true,
   autoFocus = false,
 }: AdvancedSearchBarProps) {
-  const [internalValue, setInternalValue] = useState(value || "");
+  const [internalValue, setInternalValue] = useState(() => value || "");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const { searchHistory, filters, addSearchHistory, setFilters } =
-    useSearchStore();
-  const { tasks } = useTaskStore();
+  const { searchHistory, filters, setFilters } = useSearchStore();
+  const { allIds, byId } = useTaskStore();
   const debouncedValue = useDebounce(internalValue, debounce);
-
-  // Sync external value changes
-  useEffect(() => {
-    if (value !== undefined && value !== internalValue) {
-      setInternalValue(value);
-    }
-  }, [value, internalValue]);
 
   // Update suggestions based on search history and popular searches
   const suggestions = useMemo(() => {
@@ -102,7 +92,6 @@ export function AdvancedSearchBar({
 
   const handleSearch = () => {
     if (debouncedValue.trim()) {
-      addSearchHistory(debouncedValue.trim());
       onSearch?.(debouncedValue.trim());
     }
   };
@@ -143,13 +132,13 @@ export function AdvancedSearchBar({
 
     switch (filterType) {
       case "priority":
-        newFilters.priority = value;
+        newFilters.priorities = [value];
         break;
       case "status":
-        newFilters.status = value;
+        newFilters.completed = value === "completed";
         break;
       case "list":
-        newFilters.listId = parseInt(value);
+        newFilters.lists = [parseInt(value)];
         break;
     }
 
@@ -158,7 +147,7 @@ export function AdvancedSearchBar({
   };
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn("relative", className || "")}>
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <Input
@@ -190,96 +179,90 @@ export function AdvancedSearchBar({
         </Button>
       </div>
 
-      {showSuggestions && (
-        <Popover
-          open={isOpen && (suggestions.length > 0 || internalValue.length > 0)}
-        >
-          <PopoverTrigger asChild>
-            <div className="hidden" />
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-[400px] p-0"
-            align="start"
-            sideOffset={4}
-          >
-            <Command>
-              <div className="p-3 border-b">
-                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  Quick Actions
+      {showSuggestions && isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+          <Command>
+            <div className="p-3 border-b">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Quick Actions
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                Type / to search, or use filters below
+              </div>
+            </div>
+
+            {suggestions.length > 0 && (
+              <div className="p-2">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Suggestions
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Type / to search, or use filters below
+                {suggestions.map((suggestion, index) => (
+                  <button
+                    key={suggestion.id}
+                    className={cn(
+                      "w-full text-left px-2 py-1.5 rounded-md text-sm",
+                      "hover:bg-gray-100 dark:hover:bg-gray-800",
+                      index === selectedIndex
+                        ? "bg-gray-100 dark:bg-gray-800"
+                        : ""
+                    )}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    <div className="flex items-center gap-2">
+                      {suggestion.icon}
+                      <span>{suggestion.text}</span>
+                      <Badge variant="secondary" className="ml-auto">
+                        {suggestion.type}
+                      </Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {showFilters && (
+              <div className="p-3 border-t">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Quick Filters
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyQuickFilter("priority", "high")}
+                    className="justify-start"
+                  >
+                    <Tag className="h-4 w-4 mr-2" />
+                    High Priority
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyQuickFilter("status", "pending")}
+                    className="justify-start"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Pending
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => applyQuickFilter("status", "completed")}
+                    className="justify-start"
+                  >
+                    <Star className="h-4 w-4 mr-2" />
+                    Completed
+                  </Button>
                 </div>
               </div>
-
-              {suggestions.length > 0 && (
-                <div className="p-2">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                    Suggestions
-                  </div>
-                  {suggestions.map((suggestion, index) => (
-                    <button
-                      key={suggestion.id}
-                      className={cn(
-                        "w-full text-left px-2 py-1.5 rounded-md text-sm",
-                        "hover:bg-gray-100 dark:hover:bg-gray-800",
-                        index === selectedIndex &&
-                          "bg-gray-100 dark:bg-gray-800"
-                      )}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                    >
-                      <div className="flex items-center gap-2">
-                        {suggestion.icon}
-                        <span>{suggestion.text}</span>
-                        <Badge variant="secondary" className="ml-auto">
-                          {suggestion.type}
-                        </Badge>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {showFilters && (
-                <div className="p-3 border-t">
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-                    Quick Filters
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => applyQuickFilter("priority", "high")}
-                      className="justify-start"
-                    >
-                      <Tag className="h-4 w-4 mr-2" />
-                      High Priority
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => applyQuickFilter("status", "pending")}
-                      className="justify-start"
-                    >
-                      <Filter className="h-4 w-4 mr-2" />
-                      Pending
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => applyQuickFilter("status", "completed")}
-                      className="justify-start"
-                    >
-                      <Star className="h-4 w-4 mr-2" />
-                      Completed
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Command>
-          </PopoverContent>
-        </Popover>
+            )}
+          </Command>
+        </div>
       )}
     </div>
   );
+}
+
+function cn(...classes: string[]) {
+  return classes.filter(Boolean).join(" ");
 }

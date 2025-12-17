@@ -33,4 +33,4 @@ export {
 export * from "@/types/task";
 export * from "@/types/api";
 export * from "@/types/components";
-export * from "@/types/utils";
+// Don't export utils to avoid duplicate ApiError export

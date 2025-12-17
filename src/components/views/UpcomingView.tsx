@@ -19,16 +19,16 @@ export function UpcomingView() {
     React.useState<TaskWithRelations | null>(null);
 
   // Store hooks
-  const tasks = useTaskStore((state: any) => state.byId);
-  const loading = useTaskStore((state: any) => state.loading);
-  const error = useTaskStore((state: any) => state.error);
+  const tasks = useTaskStore((state) => state.byId);
+  const loading = useTaskStore((state) => state.loading);
+  const error = useTaskStore((state) => state.error);
   const lists = useListStore((state) =>
     state.allIds.map((id) => state.byId[id])
   );
   const labels = useLabelStore((state) => state.allIds.map(id => state.byId[id]));
-  const searchQuery = useSearchStore((state: any) => state.query);
-  const searchResults = useSearchStore((state: any) => state.results);
-  const isSearching = useSearchStore((state: any) => state.isSearching);
+  const searchQuery = useSearchStore((state) => state.query);
+  const searchResults = useSearchStore((state) => state.results);
+  const isSearching = useSearchStore((state) => state.isSearching);
 
   // Get upcoming tasks (next 30 days)
   const today = new Date();
@@ -39,7 +39,7 @@ export function UpcomingView() {
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return diffDays > 0 && diffDays <= 30 && !task.isCompleted;
     });
-  }, [tasks]);
+  }, [tasks, today]);
 
   // Group tasks by week
   const tasksByWeek = React.useMemo(() => {
@@ -66,14 +66,16 @@ export function UpcomingView() {
     });
 
     return grouped;
-  }, [upcomingTasks]);
+  }, [upcomingTasks, today]);
 
   // Use search results if searching
   const displayTasks = isSearching ? searchResults : upcomingTasks;
 
   // Handle task operations
   const handleTaskToggle = async (task: TaskWithRelations) => {
-    await useTaskStore.getState().toggleTask(task.id);
+    if (task.id !== undefined) {
+      await useTaskStore.getState().toggleTask(task.id);
+    }
   };
 
   const handleTaskEdit = (task: TaskWithRelations) => {
@@ -83,7 +85,9 @@ export function UpcomingView() {
 
   const handleTaskDelete = async (task: TaskWithRelations) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      await useTaskStore.getState().deleteTask(task.id);
+      if (task.id !== undefined) {
+        await useTaskStore.getState().deleteTask(task.id);
+      }
     }
   };
 
@@ -92,8 +96,8 @@ export function UpcomingView() {
     await useTaskStore.getState().createTask(taskData);
   };
 
-  const handleFormSubmit = async (taskData: any) => {
-    if (selectedTask) {
+  const handleFormSubmit = async (taskData: TaskWithRelations) => {
+    if (selectedTask && selectedTask.id !== undefined) {
       await useTaskStore.getState().updateTask(selectedTask.id, taskData);
     } else {
       await useTaskStore.getState().createTask(taskData);

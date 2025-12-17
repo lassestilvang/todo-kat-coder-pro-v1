@@ -36,14 +36,16 @@ export function TodayView() {
     return Object.values(tasks).filter(
       (task: TaskWithRelations) => task.date === today
     );
-  }, [tasks]);
+  }, [tasks, today]);
 
   // Use search results if searching
   const displayTasks = isSearching ? searchResults : todayTasks;
 
   // Handle task operations
   const handleTaskToggle = async (task: TaskWithRelations) => {
-    await useTaskStore.getState().toggleTask(task.id);
+    if (task.id !== undefined) {
+      await useTaskStore.getState().toggleTask(task.id);
+    }
   };
 
   const handleTaskEdit = (task: TaskWithRelations) => {
@@ -53,7 +55,9 @@ export function TodayView() {
 
   const handleTaskDelete = async (task: TaskWithRelations) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      await useTaskStore.getState().deleteTask(task.id);
+      if (task.id !== undefined) {
+        await useTaskStore.getState().deleteTask(task.id);
+      }
     }
   };
 
@@ -62,8 +66,8 @@ export function TodayView() {
     await useTaskStore.getState().createTask(taskData);
   };
 
-  const handleFormSubmit = async (taskData: any) => {
-    if (selectedTask) {
+  const handleFormSubmit = async (taskData: TaskWithRelations) => {
+    if (selectedTask && selectedTask.id !== undefined) {
       await useTaskStore.getState().updateTask(selectedTask.id, taskData);
     } else {
       await useTaskStore.getState().createTask({

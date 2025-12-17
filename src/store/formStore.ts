@@ -3,7 +3,6 @@ import { immer } from "zustand/middleware/immer";
 import { Task, List, Label, SubTask, Attachment } from "@/types/task";
 import {
   validateTask,
-  validateTaskPartial,
   validateTaskField,
   validateList,
   validateListField,
@@ -14,6 +13,7 @@ import {
 
 interface FormField {
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   error: string;
   touched: boolean;
@@ -57,11 +57,13 @@ interface FormState {
 
   // Actions
   // Task form actions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setTaskFieldValue: (field: keyof Task, value: any) => void;
   setTaskFieldError: (field: keyof Task, error: string) => void;
   setTaskFieldTouched: (field: keyof Task, touched: boolean) => void;
   validateTaskField: (
     field: keyof Task,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any
   ) => Promise<string | undefined>;
   validateTaskForm: () => Promise<ValidationResult>;
@@ -69,11 +71,13 @@ interface FormState {
   setTaskFormSubmitting: (submitting: boolean) => void;
 
   // List form actions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setListFieldValue: (field: keyof List, value: any) => void;
   setListFieldError: (field: keyof List, error: string) => void;
   setListFieldTouched: (field: keyof List, touched: boolean) => void;
   validateListField: (
     field: keyof List,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any
   ) => Promise<string | undefined>;
   validateListForm: () => Promise<ValidationResult>;
@@ -81,11 +85,13 @@ interface FormState {
   setListFormSubmitting: (submitting: boolean) => void;
 
   // Label form actions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setLabelFieldValue: (field: keyof Label, value: any) => void;
   setLabelFieldError: (field: keyof Label, error: string) => void;
   setLabelFieldTouched: (field: keyof Label, touched: boolean) => void;
   validateLabelField: (
     field: keyof Label,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value: any
   ) => Promise<string | undefined>;
   validateLabelForm: () => Promise<ValidationResult>;
@@ -157,12 +163,12 @@ export const useFormStore = create<FormState>()(
       const values = get().taskForm.values;
       try {
         validateTask(values);
-        return { isValid: true, errors: {} };
+        return { isValid: true, errors: {} as Record<string, string> };
       } catch (error) {
         if (error instanceof Error) {
-          return { isValid: false, errors: { general: error.message } };
+          return { isValid: false, errors: { general: error.message } as Record<string, string> };
         }
-        return { isValid: false, errors: { general: "Validation failed" } };
+        return { isValid: false, errors: { general: "Validation failed" } as Record<string, string> };
       }
     },
 
@@ -217,12 +223,12 @@ export const useFormStore = create<FormState>()(
       const values = get().listForm.values;
       try {
         validateList(values);
-        return { isValid: true, errors: {} };
+        return { isValid: true, errors: {} as Record<string, string> };
       } catch (error) {
         if (error instanceof Error) {
-          return { isValid: false, errors: { general: error.message } };
+          return { isValid: false, errors: { general: error.message } as Record<string, string> };
         }
-        return { isValid: false, errors: { general: "Validation failed" } };
+        return { isValid: false, errors: { general: "Validation failed" } as Record<string, string> };
       }
     },
 
@@ -277,12 +283,12 @@ export const useFormStore = create<FormState>()(
       const values = get().labelForm.values;
       try {
         validateLabel(values);
-        return { isValid: true, errors: {} };
+        return { isValid: true, errors: {} as Record<string, string> };
       } catch (error) {
         if (error instanceof Error) {
-          return { isValid: false, errors: { general: error.message } };
+          return { isValid: false, errors: { general: error.message } as Record<string, string> };
         }
-        return { isValid: false, errors: { general: "Validation failed" } };
+        return { isValid: false, errors: { general: "Validation failed" } as Record<string, string> };
       }
     },
 

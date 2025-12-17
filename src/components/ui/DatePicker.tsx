@@ -1,15 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 interface DatePickerProps {
@@ -37,18 +30,28 @@ export function DatePicker({
   minDate,
   maxDate,
 }: DatePickerProps) {
-  const [date, setDate] = useState<Date | undefined>(value);
-  const [time, setTime] = useState<string>("");
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setDate(value);
+  const [date, setDate] = useState<Date | undefined>(() => value);
+  const [time, setTime] = useState<string>(() => {
     if (value && showTime) {
       const hours = value.getHours().toString().padStart(2, "0");
       const minutes = value.getMinutes().toString().padStart(2, "0");
-      setTime(`${hours}:${minutes}`);
+      return `${hours}:${minutes}`;
     }
-  }, [value, showTime]);
+    return "";
+  });
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleDateChange = (selectedDate: Date | undefined) => {
     setDate(selectedDate);
@@ -91,60 +94,56 @@ export function DatePicker({
   };
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div ref={containerRef} className={cn("space-y-2", className)}>
       {label && (
-        <Label htmlFor="date-picker" className="text-sm font-medium">
+        <label className="text-sm font-medium">
           {label}
-        </Label>
+        </label>
       )}
 
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              !date && "text-muted-foreground",
-              error && "border-destructive"
-            )}
-            disabled={disabled}
-            id="date-picker"
-          >
-            <Calendar className="mr-2 h-4 w-4" />
-            {date ? formatDateDisplay(date) : <span>{placeholder}</span>}
-          </Button>
-        </PopoverTrigger>
-
-        <PopoverContent className="w-auto p-3" align="start">
-          <CalendarComponent
-            mode="single"
-            selected={date}
-            onSelect={handleDateChange}
-            disabled={(date) => {
-              if (disabled) return true;
-              if (minDate && date < minDate) return true;
-              if (maxDate && date > maxDate) return true;
-              return false;
-            }}
-            initialFocus
-          />
-
-          {showTime && (
-            <div className="flex items-center space-x-2 mt-3 pt-3 border-t">
-              <Label htmlFor="time-input" className="text-sm">
-                Time:
-              </Label>
-              <input
-                id="time-input"
-                type="time"
-                value={time}
-                onChange={(e) => handleTimeChange(e.target.value)}
-                className="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
+      <div className="relative">
+        <Button
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !date && "text-muted-foreground",
+            error && "border-destructive"
           )}
-        </PopoverContent>
-      </Popover>
+          disabled={disabled}
+          onClick={() => setOpen(!open)}
+        >
+          <Calendar className="mr-2 h-4 w-4" />
+          {date ? formatDateDisplay(date) : <span>{placeholder}</span>}
+        </Button>
+
+        {open && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 p-3">
+            <input
+              type="date"
+              value={date ? date.toISOString().split("T")[0] : ""}
+              onChange={(e) => {
+                const newDate = e.target.value ? new Date(e.target.value) : undefined;
+                handleDateChange(newDate);
+              }}
+              min={minDate ? minDate.toISOString().split("T")[0] : undefined}
+              max={maxDate ? maxDate.toISOString().split("T")[0] : undefined}
+              className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+
+            {showTime && (
+              <div className="flex items-center space-x-2 mt-3 pt-3 border-t">
+                <label className="text-sm">Time:</label>
+                <input
+                  type="time"
+                  value={time}
+                  onChange={(e) => handleTimeChange(e.target.value)}
+                  className="px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {error && (
         <p className="text-sm text-destructive" role="alert">

@@ -19,18 +19,18 @@ export function Next7DaysView() {
     React.useState<TaskWithRelations | null>(null);
 
   // Store hooks
-  const tasks = useTaskStore((state: any) => state.byId);
-  const loading = useTaskStore((state: any) => state.loading);
-  const error = useTaskStore((state: any) => state.error);
+  const tasks = useTaskStore((state) => state.byId);
+  const loading = useTaskStore((state) => state.loading);
+  const error = useTaskStore((state) => state.error);
   const lists = useListStore((state) =>
     state.allIds.map((id) => state.byId[id])
   );
   const labels = useLabelStore((state) =>
     state.allIds.map((id) => state.byId[id])
   );
-  const searchQuery = useSearchStore((state: any) => state.query);
-  const searchResults = useSearchStore((state: any) => state.results);
-  const isSearching = useSearchStore((state: any) => state.isSearching);
+  const searchQuery = useSearchStore((state) => state.query);
+  const searchResults = useSearchStore((state) => state.results);
+  const isSearching = useSearchStore((state) => state.isSearching);
 
   // Get next 7 days
   const today = new Date();
@@ -62,7 +62,9 @@ export function Next7DaysView() {
 
   // Handle task operations
   const handleTaskToggle = async (task: TaskWithRelations) => {
-    await useTaskStore.getState().toggleTask(task.id);
+    if (task.id !== undefined) {
+      await useTaskStore.getState().toggleTask(task.id);
+    }
   };
 
   const handleTaskEdit = (task: TaskWithRelations) => {
@@ -72,7 +74,9 @@ export function Next7DaysView() {
 
   const handleTaskDelete = async (task: TaskWithRelations) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      await useTaskStore.getState().deleteTask(task.id);
+      if (task.id !== undefined) {
+        await useTaskStore.getState().deleteTask(task.id);
+      }
     }
   };
 
@@ -81,8 +85,8 @@ export function Next7DaysView() {
     await useTaskStore.getState().createTask(taskData);
   };
 
-  const handleFormSubmit = async (taskData: any) => {
-    if (selectedTask) {
+  const handleFormSubmit = async (taskData: TaskWithRelations) => {
+    if (selectedTask && selectedTask.id !== undefined) {
       await useTaskStore.getState().updateTask(selectedTask.id, taskData);
     } else {
       await useTaskStore.getState().createTask(taskData);

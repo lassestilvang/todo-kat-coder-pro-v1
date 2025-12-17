@@ -15,19 +15,18 @@ import { InboxView } from "./InboxView";
 import { TaskDetailView } from "./TaskDetailView";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function Dashboard() {
   const [selectedTask, setSelectedTask] =
     React.useState<TaskWithRelations | null>(null);
 
   // Store hooks
-  const tasks = useTaskStore((state: any) => state.byId);
-  const loading = useTaskStore((state: any) => state.loading);
+  const tasks = useTaskStore((state) => state.byId);
+  const loading = useTaskStore((state) => state.loading);
   const lists = useListStore((state) => state.allIds.map(id => state.byId[id]));
   const labels = useLabelStore((state) => state.allIds.map(id => state.byId[id]));
-  const currentView = useViewStore((state: any) => state.currentView);
-  const searchQuery = useSearchStore((state: any) => state.query);
+  const currentView = useViewStore((state) => state.currentView);
+  const searchQuery = useSearchStore((state) => state.query);
 
   // Handle task selection for detail view
   const handleTaskSelect = (task: TaskWithRelations) => {
@@ -41,8 +40,10 @@ export function Dashboard() {
 
   const handleTaskDelete = async (task: TaskWithRelations) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      await useTaskStore.getState().deleteTask(task.id);
-      setSelectedTask(null);
+      if (task.id !== undefined) {
+        await useTaskStore.getState().deleteTask(task.id);
+        setSelectedTask(null);
+      }
     }
   };
 
@@ -52,16 +53,18 @@ export function Dashboard() {
   };
 
   const handleTaskToggle = async (task: TaskWithRelations) => {
-    await useTaskStore.getState().toggleTask(task.id);
+    if (task.id !== undefined) {
+      await useTaskStore.getState().toggleTask(task.id);
+    }
   };
 
   // Calculate overall statistics
   const totalTasks = Object.values(tasks).length;
   const completedTasks = Object.values(tasks).filter(
-    (t: any) => t.isCompleted
+    (t) => t.isCompleted
   ).length;
   const pendingTasks = Object.values(tasks).filter(
-    (t: any) => !t.isCompleted
+    (t) => !t.isCompleted
   ).length;
 
   return (
@@ -141,35 +144,27 @@ export function Dashboard() {
         {/* Views */}
         <div className="lg:col-span-3 space-y-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <Tabs value={currentView} className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="today">Today</TabsTrigger>
-                <TabsTrigger value="next7days">Next 7 Days</TabsTrigger>
-                <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="inbox">Inbox</TabsTrigger>
-              </TabsList>
+            <div className="grid w-full grid-cols-5 gap-2 mb-4">
+              {["today", "next7days", "upcoming", "all", "inbox"].map((view) => (
+                <button
+                  key={view}
+                  onClick={() => useViewStore.getState().currentView = view as "today" | "next7days" | "upcoming" | "all" | "inbox"}
+                  className={`px-4 py-2 rounded-md text-sm font-medium ${
+                    currentView === view
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                      : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200"
+                  }`}
+                >
+                  {view.charAt(0).toUpperCase() + view.slice(1)}
+                </button>
+              ))}
+            </div>
 
-              <TabsContent value="today">
-                <TodayView />
-              </TabsContent>
-
-              <TabsContent value="next7days">
-                <Next7DaysView />
-              </TabsContent>
-
-              <TabsContent value="upcoming">
-                <UpcomingView />
-              </TabsContent>
-
-              <TabsContent value="all">
-                <AllView />
-              </TabsContent>
-
-              <TabsContent value="inbox">
-                <InboxView />
-              </TabsContent>
-            </Tabs>
+            {currentView === "today" && <TodayView />}
+            {currentView === "next7days" && <Next7DaysView />}
+            {currentView === "upcoming" && <UpcomingView />}
+            {currentView === "all" && <AllView />}
+            {currentView === "inbox" && <InboxView />}
           </div>
         </div>
 
@@ -202,7 +197,7 @@ export function Dashboard() {
               Lists
             </h3>
             <div className="space-y-2">
-              {lists.map((list: any) => (
+              {lists.map((list) => (
                 <div
                   key={list.id}
                   className="flex items-center justify-between"
@@ -216,7 +211,7 @@ export function Dashboard() {
                   <Badge variant="outline" className="text-xs">
                     {
                       Object.values(tasks).filter(
-                        (t: any) => t.listId === list.id
+                        (t) => t.listId === list.id
                       ).length
                     }
                   </Badge>
@@ -231,7 +226,7 @@ export function Dashboard() {
               Labels
             </h3>
             <div className="flex flex-wrap gap-2">
-              {labels.map((label: any) => (
+              {labels.map((label) => (
                 <Badge
                   key={label.id}
                   variant="outline"

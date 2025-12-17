@@ -104,7 +104,8 @@ export class DatabaseService {
     } = options;
 
     // Build where conditions
-    const whereConditions: any[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereConditions: Array<any> = [];
     if (listId) whereConditions.push(eq(tasks.listId, listId));
     if (priority) whereConditions.push(eq(tasks.priority, priority));
     if (completed !== undefined)
@@ -159,6 +160,7 @@ export class DatabaseService {
     // Group results by task
     const tasksMap = new Map<number, TaskWithRelations>();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rawResults.forEach((row: any) => {
       const taskId = row.task.id;
 
@@ -169,30 +171,31 @@ export class DatabaseService {
           labels: [],
           subTasks: [],
           attachments: [],
+          reminders: row.task.reminders ? JSON.parse(row.task.reminders) : [],
         });
       }
 
       const task = tasksMap.get(taskId)!;
 
       // Add label if exists and not already added
-      if (row.labels && !task.labels.find((l) => l.id === row.labels.id)) {
-        task.labels.push(row.labels);
+      if (row.labels && !task.labels?.find((l) => l.id === row.labels.id)) {
+        task.labels?.push(row.labels);
       }
 
       // Add subtask if exists and not already added
       if (
         row.subTasks &&
-        !task.subTasks.find((s) => s.id === row.subTasks.id)
+        !task.subTasks?.find((s) => s.id === row.subTasks.id)
       ) {
-        task.subTasks.push(row.subTasks);
+        task.subTasks?.push(row.subTasks);
       }
 
       // Add attachment if exists and not already added
       if (
         row.attachments &&
-        !task.attachments.find((a) => a.id === row.attachments.id)
+        !task.attachments?.find((a) => a.id === row.attachments.id)
       ) {
-        task.attachments.push(row.attachments);
+        task.attachments?.push(row.attachments);
       }
     });
 
@@ -233,24 +236,26 @@ export class DatabaseService {
       labels: [],
       subTasks: [],
       attachments: [],
+      reminders: results[0].task.reminders ? JSON.parse(results[0].task.reminders) : [],
     } as TaskWithRelations;
 
     // Group related data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     results.forEach((row: any) => {
-      if (row.labels && !task.labels.find((l) => l.id === row.labels.id)) {
-        task.labels.push(row.labels);
+      if (row.labels && !task.labels?.find((l) => l.id === row.labels.id)) {
+        task.labels?.push(row.labels);
       }
       if (
         row.subTasks &&
-        !task.subTasks.find((s) => s.id === row.subTasks.id)
+        !task.subTasks?.find((s) => s.id === row.subTasks.id)
       ) {
-        task.subTasks.push(row.subTasks);
+        task.subTasks?.push(row.subTasks);
       }
       if (
         row.attachments &&
-        !task.attachments.find((a) => a.id === row.attachments.id)
+        !task.attachments?.find((a) => a.id === row.attachments.id)
       ) {
-        task.attachments.push(row.attachments);
+        task.attachments?.push(row.attachments);
       }
     });
 
@@ -262,11 +267,18 @@ export class DatabaseService {
   ): Promise<TaskWithRelations> {
     const [newTask] = (await db
       .insert(tasks)
-      .values(task)
+      .values({
+        ...task,
+        reminders: task.reminders ? JSON.stringify(task.reminders) : undefined,
+      })
       .returning()
-      .all()) as Task[];
+      .all()) as unknown as Task[];
 
-    return this.getTaskById(newTask.id)!;
+    const createdTask = await this.getTaskById(newTask.id!);
+    if (!createdTask) {
+      throw new Error("Failed to retrieve created task");
+    }
+    return createdTask;
   }
 
   async updateTask(
@@ -275,14 +287,18 @@ export class DatabaseService {
   ): Promise<TaskWithRelations | undefined> {
     const [updatedTask] = (await db
       .update(tasks)
-      .set({ ...updates, updatedAt: sql`CURRENT_TIMESTAMP` })
+      .set({
+        ...updates,
+        reminders: updates.reminders ? JSON.stringify(updates.reminders) : undefined,
+        updatedAt: sql`CURRENT_TIMESTAMP`
+      })
       .where(eq(tasks.id, id))
       .returning()
-      .all()) as Task[];
+      .all()) as unknown as Task[];
 
     if (!updatedTask) return undefined;
 
-    return this.getTaskById(updatedTask.id);
+    return this.getTaskById(updatedTask.id!);
   }
 
   async deleteTask(id: number): Promise<void> {
@@ -299,11 +315,11 @@ export class DatabaseService {
       })
       .where(eq(tasks.id, id))
       .returning()
-      .all()) as Task[];
+      .all()) as unknown as Task[];
 
     if (!completedTask) return undefined;
 
-    return this.getTaskById(completedTask.id);
+    return this.getTaskById(completedTask.id!);
   }
 
   async uncompleteTask(id: number): Promise<TaskWithRelations | undefined> {
@@ -316,11 +332,11 @@ export class DatabaseService {
       })
       .where(eq(tasks.id, id))
       .returning()
-      .all()) as Task[];
+      .all()) as unknown as Task[];
 
     if (!uncompletedTask) return undefined;
 
-    return this.getTaskById(uncompletedTask.id);
+    return this.getTaskById(uncompletedTask.id!);
   }
 
   // Task labels operations

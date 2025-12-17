@@ -58,7 +58,7 @@ interface UIState {
   // Actions
   setTheme: (theme: "light" | "dark" | "system") => void;
   setIsDarkMode: (isDarkMode: boolean) => void;
-  openModal: (modal: keyof UIState["modals"], data?: any) => void;
+  openModal: (modal: keyof UIState["modals"], data?: Record<string, unknown>) => void;
   closeModal: (modal: keyof UIState["modals"]) => void;
   setLoading: (key: string, loading: boolean) => void;
   addNotification: (
@@ -73,7 +73,7 @@ interface UIState {
 
 export const useUIStore = create<UIState>()(
   (set, get) => ({
-      theme: "system",
+    theme: "system",
       isDarkMode: false,
 
       modals: {
@@ -179,6 +179,5 @@ export const useUIStore = create<UIState>()(
       setSidebarCollapsed: (collapsed) => {
         set({ sidebarCollapsed: collapsed });
       },
-    }),
-  )
+  })
 );

@@ -33,7 +33,7 @@ export function InboxView() {
     return Object.values(tasks).filter((task: TaskWithRelations) => {
       // Filter for inbox list (magic inbox) or no specific list
       const inboxList = lists.find(
-        (list: any) => list.isMagic && list.name === "Inbox"
+        (list) => list.isMagic && list.name === "Inbox"
       );
       return task.listId === inboxList?.id || !task.listId;
     });
@@ -44,7 +44,9 @@ export function InboxView() {
 
   // Handle task operations
   const handleTaskToggle = async (task: TaskWithRelations) => {
-    await useTaskStore.getState().toggleTask(task.id);
+    if (task.id !== undefined) {
+      await useTaskStore.getState().toggleTask(task.id);
+    }
   };
 
   const handleTaskEdit = (task: TaskWithRelations) => {
@@ -54,7 +56,9 @@ export function InboxView() {
 
   const handleTaskDelete = async (task: TaskWithRelations) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      await useTaskStore.getState().deleteTask(task.id);
+      if (task.id !== undefined) {
+        await useTaskStore.getState().deleteTask(task.id);
+      }
     }
   };
 
@@ -63,13 +67,13 @@ export function InboxView() {
     await useTaskStore.getState().createTask(taskData);
   };
 
-  const handleFormSubmit = async (taskData: any) => {
-    if (selectedTask) {
+  const handleFormSubmit = async (taskData: Omit<TaskWithRelations, "id">) => {
+    if (selectedTask && selectedTask.id !== undefined) {
       await useTaskStore.getState().updateTask(selectedTask.id, taskData);
     } else {
       // Automatically assign to inbox list
       const inboxList = lists.find(
-        (list: any) => list.isMagic && list.name === "Inbox"
+        (list) => list.isMagic && list.name === "Inbox"
       );
       await useTaskStore.getState().createTask({
         ...taskData,

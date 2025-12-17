@@ -190,7 +190,10 @@ export const validateTaskField = (
   currentData: Partial<Task> = {}
 ): string | undefined => {
   try {
-    const partialSchema = TaskSchema.pick({ [field]: true });
+    const partialSchema = TaskSchema.pick({ [field]: true } as Record<
+      keyof Task,
+      true
+    >);
     partialSchema.parse({ [field]: value });
     return undefined;
   } catch (error) {
@@ -206,7 +209,10 @@ export const validateListField = (
   value: unknown
 ): string | undefined => {
   try {
-    const partialSchema = ListSchema.pick({ [field]: true });
+    const partialSchema = ListSchema.pick({ [field]: true } as Record<
+      keyof List,
+      true
+    >);
     partialSchema.parse({ [field]: value });
     return undefined;
   } catch (error) {
@@ -222,7 +228,10 @@ export const validateLabelField = (
   value: unknown
 ): string | undefined => {
   try {
-    const partialSchema = LabelSchema.pick({ [field]: true });
+    const partialSchema = LabelSchema.pick({ [field]: true } as Record<
+      keyof Label,
+      true
+    >);
     partialSchema.parse({ [field]: value });
     return undefined;
   } catch (error) {

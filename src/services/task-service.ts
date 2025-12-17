@@ -47,22 +47,22 @@ export class TaskService {
         .insert(tasks)
         .values({
           title: taskData.title,
-          description: taskData.description,
+          description: taskData.description || null,
           date: taskData.date,
-          deadline: taskData.deadline,
-          estimateHours: taskData.estimateHours,
-          estimateMinutes: taskData.estimateMinutes,
-          actualHours: taskData.actualHours,
-          actualMinutes: taskData.actualMinutes,
-          priority: taskData.priority,
-          listId: taskData.listId,
+          deadline: taskData.deadline || null,
+          estimateHours: taskData.estimateHours || null,
+          estimateMinutes: taskData.estimateMinutes || null,
+          actualHours: taskData.actualHours || null,
+          actualMinutes: taskData.actualMinutes || null,
+          priority: taskData.priority || "none",
+          listId: taskData.listId || 1,
           isCompleted: taskData.isCompleted || false,
-          completedAt: taskData.completedAt,
+          completedAt: taskData.completedAt || null,
           isRecurring: taskData.isRecurring || false,
-          recurrenceType: taskData.recurrenceType,
-          recurrenceInterval: taskData.recurrenceInterval,
-          recurrenceEndDate: taskData.recurrenceEndDate,
-          reminders: taskData.reminders,
+          recurrenceType: taskData.recurrenceType || null,
+          recurrenceInterval: taskData.recurrenceInterval || null,
+          recurrenceEndDate: taskData.recurrenceEndDate || null,
+          reminders: taskData.reminders ? JSON.stringify(taskData.reminders) : null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
@@ -127,7 +127,23 @@ export class TaskService {
       const [updatedTask] = await db
         .update(tasks)
         .set({
-          ...taskData,
+          title: taskData.title,
+          description: taskData.description,
+          date: taskData.date,
+          deadline: taskData.deadline,
+          estimateHours: taskData.estimateHours,
+          estimateMinutes: taskData.estimateMinutes,
+          actualHours: taskData.actualHours,
+          actualMinutes: taskData.actualMinutes,
+          priority: taskData.priority,
+          listId: taskData.listId,
+          isCompleted: taskData.isCompleted,
+          completedAt: taskData.completedAt,
+          isRecurring: taskData.isRecurring,
+          recurrenceType: taskData.recurrenceType,
+          recurrenceInterval: taskData.recurrenceInterval,
+          recurrenceEndDate: taskData.recurrenceEndDate,
+          reminders: taskData.reminders ? JSON.stringify(taskData.reminders) : null,
           updatedAt: new Date().toISOString(),
         })
         .where(eq(tasks.id, id))
@@ -306,19 +322,19 @@ export class TaskService {
         like(tasks.description, `%${query}%`),
       ];
 
-      let whereClause = db.sql`(${searchConditions.join(" OR ")})`;
+      let whereClause = sql`(${searchConditions.join(" OR ")})`;
 
       // Apply additional filters
       if (filter.listId) {
-        whereClause = db.sql`${whereClause} AND ${tasks.listId} = ${filter.listId}`;
+        whereClause = sql`${whereClause} AND ${tasks.listId} = ${filter.listId}`;
       }
 
       if (filter.priority) {
-        whereClause = db.sql`${whereClause} AND ${tasks.priority} = ${filter.priority}`;
+        whereClause = sql`${whereClause} AND ${tasks.priority} = ${filter.priority}`;
       }
 
       if (filter.completed !== undefined) {
-        whereClause = db.sql`${whereClause} AND ${tasks.isCompleted} = ${
+        whereClause = sql`${whereClause} AND ${tasks.isCompleted} = ${
           filter.completed ? 1 : 0
         }`;
       }
@@ -351,6 +367,7 @@ export class TaskService {
       // Group results by task
       const tasksMap = new Map<number, TaskWithRelations>();
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       rawResults.forEach((row: any) => {
         const taskId = row.task.id;
 
@@ -539,8 +556,8 @@ export class TaskService {
       for (const task of recurringTasks) {
         const nextDate = this.calculateNextRecurringDate(
           task.date,
-          task.recurrenceType,
-          task.recurrenceInterval
+          task.recurrenceType || undefined,
+          task.recurrenceInterval || undefined
         );
 
         if (
@@ -564,7 +581,7 @@ export class TaskService {
               isCompleted: false,
               completedAt: null,
               isRecurring: true,
-              recurrenceType: task.recurrenceType,
+              recurrenceType: task.recurrenceType || undefined,
               recurrenceInterval: task.recurrenceInterval,
               recurrenceEndDate: task.recurrenceEndDate,
               reminders: task.reminders,

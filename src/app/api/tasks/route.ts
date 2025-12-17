@@ -20,21 +20,23 @@ export async function GET(request: Request) {
     const sortDirection =
       (searchParams.get("sortDirection") as TaskSort["direction"]) || "desc";
 
-    let query = db.select().from(tasks);
+    // Build where conditions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereConditions: Array<any> = [];
 
     // Apply filters
     if (search) {
-      query = query.where(like(tasks.title, `%${search}%`));
+      whereConditions.push(like(tasks.title, `%${search}%`));
     }
 
     if (priority) {
-      query = query.where(eq(tasks.priority, priority));
+      whereConditions.push(eq(tasks.priority, priority));
     }
 
     if (status === "completed") {
-      query = query.where(eq(tasks.isCompleted, true));
+      whereConditions.push(eq(tasks.isCompleted, true));
     } else if (status === "pending") {
-      query = query.where(eq(tasks.isCompleted, false));
+      whereConditions.push(eq(tasks.isCompleted, false));
     }
 
     // Apply view filters
@@ -43,9 +45,9 @@ export async function GET(request: Request) {
       today.setHours(0, 0, 0, 0);
       const endOfDay = new Date();
       endOfDay.setHours(23, 59, 59, 999);
-      query = query.where(
+      whereConditions.push(
         and(
-          like(tasks.dueDate, `${today.toISOString().split("T")[0]}%`),
+          like(tasks.date, `${today.toISOString().split("T")[0]}%`),
           isNull(tasks.isCompleted)
         )
       );
@@ -53,27 +55,53 @@ export async function GET(request: Request) {
       const today = new Date();
       const next7Days = new Date();
       next7Days.setDate(today.getDate() + 7);
-      query = query.where(
+      whereConditions.push(
         and(
-          like(tasks.dueDate, `%${today.toISOString().split("T")[0]}%`),
-          like(tasks.dueDate, `%${next7Days.toISOString().split("T")[0]}%`),
+          like(tasks.date, `%${today.toISOString().split("T")[0]}%`),
+          like(tasks.date, `%${next7Days.toISOString().split("T")[0]}%`),
           isNull(tasks.isCompleted)
         )
       );
     } else if (view === "upcoming") {
       const today = new Date();
-      query = query.where(
+      whereConditions.push(
         and(
-          like(tasks.dueDate, `%${today.toISOString().split("T")[0]}%`),
+          like(tasks.date, `%${today.toISOString().split("T")[0]}%`),
           isNull(tasks.isCompleted)
         )
       );
     }
 
+    // Create query with where conditions
+    let query;
+    if (whereConditions.length > 0) {
+      query = db.select().from(tasks).where(and(...whereConditions));
+    } else {
+      query = db.select().from(tasks);
+    }
+
     // Apply sorting
-    query = query.orderBy(
-      sortDirection === "asc" ? tasks[sortField] : tasks[sortField]
-    );
+    let sortColumn;
+    switch (sortField as string) {
+      case "title":
+        sortColumn = tasks.title;
+        break;
+      case "priority":
+        sortColumn = tasks.priority;
+        break;
+      case "date":
+        sortColumn = tasks.date;
+        break;
+      case "createdAt":
+        sortColumn = tasks.createdAt;
+        break;
+      case "updatedAt":
+        sortColumn = tasks.updatedAt;
+        break;
+      default:
+        sortColumn = tasks.createdAt;
+    }
+    query = query.orderBy(sortDirection === "asc" ? sortColumn : sortColumn);
 
     const result = await query;
 
@@ -96,6 +124,7 @@ export async function POST(request: Request) {
       .insert(tasks)
       .values({
         ...validatedData,
+        reminders: validatedData.reminders ? JSON.stringify(validatedData.reminders) : undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })

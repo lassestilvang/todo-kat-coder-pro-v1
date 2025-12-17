@@ -128,8 +128,8 @@ export interface FormConfig<TData = unknown> {
   fields: FormField[];
   submitText: string;
   cancelText?: string;
-  validationSchema?: any; // Keep any for Zod schema compatibility
-  onSubmit: (data: TData) => Promise<void> | void;
+  validationSchema?: unknown; // Keep unknown for Zod schema compatibility
+  onSubmit: (data: unknown) => Promise<void> | void;
   onCancel?: () => void;
   onSuccess?: (data: TData) => void;
   onError?: (error: Error) => void;
@@ -153,8 +153,8 @@ export interface FormContext<TValues = Record<string, unknown>> {
 // Form hooks
 export interface UseFormOptions<T> {
   initialValues: T;
-  validationSchema?: any; // Keep any for Zod schema compatibility
-  onSubmit: (values: T) => Promise<void> | void;
+  validationSchema?: unknown; // Keep unknown for Zod schema compatibility
+  onSubmit: (values: unknown) => Promise<void> | void;
   validateOnChange?: boolean;
   validateOnBlur?: boolean;
   validateOnMount?: boolean;

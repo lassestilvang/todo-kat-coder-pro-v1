@@ -5,21 +5,19 @@ import { useState, useEffect } from "react";
 type Theme = "light" | "dark" | "system";
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>("system");
-
-  useEffect(() => {
+  const [theme, setTheme] = useState<Theme>(() => {
     // Check localStorage for saved theme
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme) {
-      setTheme(savedTheme);
+      return savedTheme;
     } else {
       // Check system preference
       const prefersDark = window.matchMedia(
         "(prefers-color-scheme: dark)"
       ).matches;
-      setTheme(prefersDark ? "dark" : "light");
+      return prefersDark ? "dark" : "light";
     }
-  }, []);
+  });
 
   useEffect(() => {
     // Apply theme to document

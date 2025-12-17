@@ -98,7 +98,7 @@ export interface TaskFormProps extends BaseComponentProps {
   task?: TaskWithRelations;
   lists: List[];
   labels: Label[];
-  onSubmit: (data: any) => Promise<void> | void;
+  onSubmit: (data: unknown) => Promise<void> | void;
   onCancel?: () => void;
   onDelete?: (task: TaskWithRelations) => void;
   mode?: "create" | "edit";
@@ -128,7 +128,7 @@ export interface ListCardProps extends BaseComponentProps {
 
 export interface ListFormProps extends BaseComponentProps {
   list?: List;
-  onSubmit: (data: any) => Promise<void> | void;
+  onSubmit: (data: unknown) => Promise<void> | void;
   onCancel?: () => void;
   onDelete?: (list: List) => void;
   mode?: "create" | "edit";
@@ -165,7 +165,7 @@ export interface LabelSelectorProps extends BaseComponentProps {
 
 export interface LabelFormProps extends BaseComponentProps {
   label?: Label;
-  onSubmit: (data: any) => Promise<void> | void;
+  onSubmit: (data: unknown) => Promise<void> | void;
   onCancel?: () => void;
   onDelete?: (label: Label) => void;
   mode?: "create" | "edit";
@@ -194,7 +194,7 @@ export interface FilterBarProps extends BaseComponentProps {
   };
   lists: List[];
   labels: Label[];
-  onFilterChange: (filters: any) => void;
+  onFilterChange: (filters: Record<string, unknown>) => void;
   onClear?: () => void;
   compact?: boolean;
 }

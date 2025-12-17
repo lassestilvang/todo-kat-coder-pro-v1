@@ -40,6 +40,9 @@ export const labels = sqliteTable(
     createdAt: text("created_at")
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: text("updated_at")
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({
     nameIdx: uniqueIndex("label_name_idx").on(table.name),

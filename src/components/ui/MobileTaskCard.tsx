@@ -2,7 +2,6 @@
 
 import React from "react";
 import { TaskWithRelations } from "@/types/task";
-import { Card, CardContent, CardHeader, CardTitle } from "./card";
 import { Badge } from "./badge";
 import { Button } from "./button";
 import {
@@ -17,15 +16,12 @@ import {
   Star,
 } from "lucide-react";
 import { format } from "date-fns";
-import { Swipeable } from "./Swipeable";
 
 interface MobileTaskCardProps {
   task: TaskWithRelations;
   onToggle: (id: number) => void;
   onEdit: (task: TaskWithRelations) => void;
   onDelete: (id: number) => void;
-  onSwipeLeft?: () => void;
-  onSwipeRight?: () => void;
   className?: string;
 }
 
@@ -42,8 +38,6 @@ export function MobileTaskCard({
   onToggle,
   onEdit,
   onDelete,
-  onSwipeLeft,
-  onSwipeRight,
   className,
 }: MobileTaskCardProps) {
   const formatDateDisplay = (dateString: string) => {
@@ -61,93 +55,56 @@ export function MobileTaskCard({
     );
   };
 
-  const handleSwipeLeft = () => {
-    if (task.isCompleted) {
-      onToggle(task.id);
-    } else {
-      onSwipeLeft?.();
-    }
-  };
-
-  const handleSwipeRight = () => {
-    if (!task.isCompleted) {
-      onToggle(task.id);
-    } else {
-      onSwipeRight?.();
-    }
-  };
-
   return (
-    <Swipeable
-      onSwipeLeft={handleSwipeLeft}
-      onSwipeRight={handleSwipeRight}
-      leftActionLabel={task.isCompleted ? "Unmark" : "Complete"}
-      rightActionLabel={task.isCompleted ? "Delete" : "Edit"}
-      leftActionIcon={
-        task.isCompleted ? (
-          <Circle className="h-5 w-5" />
-        ) : (
-          <CheckCircle className="h-5 w-5" />
-        )
-      }
-      rightActionIcon={
-        task.isCompleted ? (
-          <Trash2 className="h-5 w-5" />
-        ) : (
-          <Edit className="h-5 w-5" />
-        )
-      }
+    <div
+      className={`border-l-4 ${
+        task.isCompleted ? "border-l-green-500" : "border-l-blue-500"
+      } ${className} bg-white rounded-lg shadow-sm`}
     >
-      <Card
-        className={`border-l-4 ${
-          task.isCompleted ? "border-l-green-500" : "border-l-blue-500"
-        } ${className}`}
-      >
-        <CardHeader className="pb-2">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onToggle(task.id)}
-                className="p-0 hover:bg-transparent"
+      <div className="p-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => task.id && onToggle(task.id)}
+              className="p-0 hover:bg-transparent"
+            >
+              {task.isCompleted ? (
+                <CheckCircle className="h-6 w-6 text-green-500" />
+              ) : (
+                <Circle className="h-6 w-6 text-gray-400" />
+              )}
+            </Button>
+            <div className="flex-1">
+              <h3
+                className={`text-lg font-semibold ${
+                  task.isCompleted
+                    ? "line-through text-gray-500"
+                    : "text-gray-900"
+                }`}
               >
-                {task.isCompleted ? (
-                  <CheckCircle className="h-6 w-6 text-green-500" />
-                ) : (
-                  <Circle className="h-6 w-6 text-gray-400" />
-                )}
-              </Button>
-              <div className="flex-1">
-                <CardTitle
-                  className={`text-lg font-semibold ${
-                    task.isCompleted
-                      ? "line-through text-gray-500"
-                      : "text-gray-900"
-                  }`}
-                >
-                  {task.title}
-                </CardTitle>
-                {task.description && (
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                    {task.description}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge className={getPriorityColor(task.priority)}>
-                <Star className="h-3 w-3 mr-1" />
-                {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-              </Badge>
-              <Button variant="ghost" size="sm" className="md:hidden">
-                <MoreVertical className="h-5 w-5" />
-              </Button>
+                {task.title}
+              </h3>
+              {task.description && (
+                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                  {task.description}
+                </p>
+              )}
             </div>
           </div>
-        </CardHeader>
+          <div className="flex items-center gap-2">
+            <Badge className={getPriorityColor(task.priority)}>
+              <Star className="h-3 w-3 mr-1" />
+              {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+            </Badge>
+            <Button variant="ghost" size="sm" className="md:hidden">
+              <MoreVertical className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
 
-        <CardContent className="space-y-3">
+        <div className="space-y-3 mt-3">
           <div className="flex items-center gap-4 text-sm text-gray-600">
             {task.date && (
               <div className="flex items-center gap-1">
@@ -203,7 +160,7 @@ export function MobileTaskCard({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onDelete(task.id)}
+                onClick={() => task.id && onDelete(task.id)}
                 className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:border-red-300"
               >
                 <Trash2 className="h-4 w-4" />
@@ -211,9 +168,9 @@ export function MobileTaskCard({
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </Swipeable>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -269,7 +226,7 @@ export function MobileBottomNavigation({
         {navigationItems.map((item) => (
           <Button
             key={item.key}
-            variant={currentView === item.key ? "default" : "ghost"}
+            variant={currentView === item.key ? "outline" : "ghost"}
             size="sm"
             onClick={() => onViewChange(item.key)}
             className="flex flex-col items-center gap-1 px-3 py-2"

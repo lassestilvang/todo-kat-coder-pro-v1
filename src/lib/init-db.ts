@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { lists, labels, tasks } from "./schema";
+import { sql } from "drizzle-orm";
 
 /**
  * Initialize the database with default data
@@ -13,7 +14,7 @@ export async function initializeDatabase() {
     const inboxExists = await db
       .select()
       .from(lists)
-      .where(db.sql`LOWER(${lists.name}) = 'inbox'`)
+      .where(sql`LOWER(${lists.name}) = 'inbox'`)
       .get();
 
     if (!inboxExists) {
@@ -34,7 +35,7 @@ export async function initializeDatabase() {
 
     // Check if we have default labels
     const labelCount = await db
-      .select({ count: db.sql`COUNT(*)` })
+      .select({ count: sql`COUNT(*)` })
       .from(labels)
       .get();
 
@@ -72,7 +73,7 @@ export async function resetDatabase() {
 
   try {
     // Drop all tables in correct order (respecting foreign keys)
-    await db.exec(`
+    await db.run(sql`
       DROP TABLE IF EXISTS task_changes;
       DROP TABLE IF EXISTS attachments;
       DROP TABLE IF EXISTS sub_tasks;
@@ -98,7 +99,7 @@ export async function resetDatabase() {
  */
 export async function getDatabaseStats() {
   try {
-    const stats = await db.transaction(async (tx) => {
+    const stats = await db.transaction(async (tx: unknown) => {
       const [
         totalTasks,
         completedTasks,
@@ -107,33 +108,33 @@ export async function getDatabaseStats() {
         totalLabels,
         todayTasks,
       ] = await Promise.all([
-        tx
-          .select({ count: db.sql`COUNT(*)` })
+        (tx as any)
+          .select({ count: sql`COUNT(*)` })
           .from(tasks)
           .get(),
-        tx
-          .select({ count: db.sql`COUNT(*)` })
+        (tx as any)
+          .select({ count: sql`COUNT(*)` })
           .from(tasks)
-          .where(db.sql`${tasks.isCompleted} = 1`)
+          .where(sql`${tasks.isCompleted} = 1`)
           .get(),
-        tx
-          .select({ count: db.sql`COUNT(*)` })
+        (tx as any)
+          .select({ count: sql`COUNT(*)` })
           .from(tasks)
-          .where(db.sql`${tasks.isCompleted} = 0`)
+          .where(sql`${tasks.isCompleted} = 0`)
           .get(),
-        tx
-          .select({ count: db.sql`COUNT(*)` })
+        (tx as any)
+          .select({ count: sql`COUNT(*)` })
           .from(lists)
           .get(),
-        tx
-          .select({ count: db.sql`COUNT(*)` })
+        (tx as any)
+          .select({ count: sql`COUNT(*)` })
           .from(labels)
           .get(),
-        tx
-          .select({ count: db.sql`COUNT(*)` })
+        (tx as any)
+          .select({ count: sql`COUNT(*)` })
           .from(tasks)
           .where(
-            db.sql`${tasks.date} = DATE('now') AND ${tasks.isCompleted} = 0`
+            sql`${tasks.date} = DATE('now') AND ${tasks.isCompleted} = 0`
           )
           .get(),
       ]);

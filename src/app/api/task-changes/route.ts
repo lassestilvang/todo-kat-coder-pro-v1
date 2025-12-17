@@ -20,7 +20,8 @@ export async function GET(request: Request) {
       | undefined;
 
     if (taskId) {
-      const changes = await auditService.getTaskChanges(parseInt(taskId), {
+      const changes = await auditService.getAllChanges({
+        taskId: parseInt(taskId),
         limit,
         offset,
         startDate: startDate || undefined,
